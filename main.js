@@ -1,9 +1,5 @@
 // @Incomplete
 // buffer can be written to directly
-// @Incomplete
-// overlay text on button
-// latin script
-// alien script
 
 // @Incomplete
 // need a monitor with 3 pixel coordinates
@@ -16,6 +12,7 @@ let buttons = null;
 let controls = {
 	mouse_x: 0,
 	mouse_y: 0,
+	target_button: null,
 };
 let curr_time = 0;
 
@@ -39,6 +36,7 @@ const Button = {
 	hovered: false,
 	pressed: false,
 	played_back: false,
+	index: 0,
 	action: "none",
 };
 function make_button(x = 0, y = 0, radius = 20) {
@@ -99,6 +97,10 @@ function generate_buttons() {
 	}
 	buttons[10].action = "N";
 	buttons[11].action = "D";
+	for (let i = 0; i < buttons.length; i += 1) {
+		let button = buttons[i];
+		button.index = i;
+	}
 	return buttons;
 }
 function draw() {
@@ -171,36 +173,50 @@ function canvas_mousemove(event) {
 }
 function canvas_mousedown(event) {
 	controls.mouse_pressed = true;
-	// nocheckin
-	// move this into update
-	update_buttons();
+	let button = get_button_under_cursor();
+	if (button == null) {
+		return;
+	}
+	controls.target_button = button;
+	button.pressed = true;
 }
 function canvas_mouseup(event) {
 	controls.mouse_pressed = false;
-	update_buttons();
+	let button = get_button_under_cursor();
+	if (button == null) {
+		return;
+	}
+	if (button == controls.target_button) {
+		press_button(button.index);
+	}
+	controls.target_button = null;
 }
 function distance(x1, y1, x2, y2) {
 	return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
 }
-function update_buttons() {
+function get_button_under_cursor() {
 	for (let i = 0; i < buttons.length; i += 1) {
 		let button = buttons[i];
 		let dist = distance(controls.mouse_x, controls.mouse_y, button.x, button.y);
 		if (dist < button.radius) {
+			return button;
+		}
+	}
+	return null;
+}
+function update_buttons() {
+	for (let i = 0; i < buttons.length; i += 1) {
+		let button = buttons[i];
+		button.pressed = false;
+		let dist = distance(controls.mouse_x, controls.mouse_y, button.x, button.y);
+		if (dist < button.radius) {
 			button.hovered = true;
-			if (controls.mouse_pressed) {
+			if (controls.target_button == button) {
 				button.pressed = true;
-			}
-			else {
-				if (button.pressed) {
-					press_button(i);
-				}
-				button.pressed = false;
 			}
 		}
 		else {
 			button.hovered = false;
-			button.pressed = false;
 		}
 	}
 }
